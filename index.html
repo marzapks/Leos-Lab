@@ -71,6 +71,80 @@ button.active,.active{box-shadow:0 0 14px var(--green), inset 0 0 16px #38ff5555
   background-position:center top!important;
   background-color:#05030b!important;
 }
+
+
+/* Mario revision: universal responsive fit for phones, tablets, laptops, and desktops.
+   Keeps both photo-based screens fully visible with no image cropping. */
+:root{
+  --vvw:100vw;
+  --vvh:100svh;
+  --fit-pad:8px;
+  --home-aspect:.75;       /* 1086 / 1448 */
+  --machine-aspect:.5625;  /* 864 / 1536 */
+}
+@supports (height:100dvh){:root{--vvh:100dvh;}}
+html,body{
+  width:100%;
+  height:100%;
+  min-height:100%;
+  overflow:hidden!important;
+  background:#05030b!important;
+}
+#home,#app{
+  width:var(--vvw)!important;
+  height:var(--vvh)!important;
+  min-height:var(--vvh)!important;
+  max-height:var(--vvh)!important;
+  overflow:hidden!important;
+  position:relative!important;
+}
+#home{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:var(--fit-pad)!important;
+  background-size:contain!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  background-color:#05030b!important;
+}
+.homeShell{
+  width:min(calc(var(--vvw) - (var(--fit-pad) * 2)), calc((var(--vvh) - (var(--fit-pad) * 2)) * var(--home-aspect)))!important;
+  height:auto!important;
+  max-width:calc(var(--vvw) - (var(--fit-pad) * 2))!important;
+  max-height:calc(var(--vvh) - (var(--fit-pad) * 2))!important;
+  aspect-ratio:1086/1448!important;
+  flex:0 0 auto!important;
+  margin:0 auto!important;
+}
+#app{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:var(--fit-pad)!important;
+}
+.machine{
+  width:min(calc(var(--vvw) - (var(--fit-pad) * 2)), calc((var(--vvh) - (var(--fit-pad) * 2)) * var(--machine-aspect)))!important;
+  height:auto!important;
+  max-width:calc(var(--vvw) - (var(--fit-pad) * 2))!important;
+  max-height:calc(var(--vvh) - (var(--fit-pad) * 2))!important;
+  aspect-ratio:864/1536!important;
+  flex:0 0 auto!important;
+  margin:0 auto!important;
+  background-size:contain!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  background-color:#05030b!important;
+  transform-origin:center center!important;
+}
+@media (orientation:landscape){
+  .launchBtn{bottom:10%!important;}
+  .modal{max-height:72%!important;bottom:4%!important;}
+}
+@media (min-width:900px) and (min-height:700px){
+  :root{--fit-pad:12px;}
+}
+
 </style>
 </head>
 <body>
@@ -151,6 +225,25 @@ button.active,.active{box-shadow:0 0 14px var(--green), inset 0 0 16px #38ff5555
 <script>
 (() => {
 'use strict';
+
+function updateResponsiveViewportFit(){
+  const vv = window.visualViewport;
+  const w = Math.max(1, Math.round(vv ? vv.width : window.innerWidth));
+  const h = Math.max(1, Math.round(vv ? vv.height : window.innerHeight));
+  const pad = Math.max(4, Math.min(14, Math.round(Math.min(w,h) * 0.012)));
+  document.documentElement.style.setProperty('--vvw', w + 'px');
+  document.documentElement.style.setProperty('--vvh', h + 'px');
+  document.documentElement.style.setProperty('--fit-pad', pad + 'px');
+  document.body.dataset.orientation = w >= h ? 'landscape' : 'portrait';
+}
+updateResponsiveViewportFit();
+window.addEventListener('resize', updateResponsiveViewportFit, {passive:true});
+window.addEventListener('orientationchange', () => setTimeout(updateResponsiveViewportFit, 120), {passive:true});
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', updateResponsiveViewportFit, {passive:true});
+  window.visualViewport.addEventListener('scroll', updateResponsiveViewportFit, {passive:true});
+}
+
 const $ = (q,root=document)=>root.querySelector(q);
 const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
 const padKeys = ['1','2','3','4','q','w','e','r','a','s','d','f','z','x','c','v'];
