@@ -149,12 +149,17 @@ html,body{
 .launchBtn:active{transform:translateX(-50%) translateY(1px) scale(.985)!important;}
 .launchBtn{touch-action:manipulation!important;pointer-events:auto!important;}
 
+
+/* Mario revision v6: hard launch fallback for iOS/Android touch. */
+body.leo-launched #home{display:none!important;visibility:hidden!important;pointer-events:none!important;opacity:0!important;}
+body.leo-launched #app{display:flex!important;visibility:visible!important;opacity:1!important;pointer-events:auto!important;min-height:var(--vvh,100svh)!important;}
+#launchBtn{cursor:pointer!important;-webkit-tap-highlight-color:transparent!important;user-select:none!important;-webkit-user-select:none!important;}
 </style>
 </head>
 <body>
 <section id="home">
   <div class="homeShell">
-    <button id="launchBtn" class="launchBtn">LAUNCH</button>
+    <button id="launchBtn" class="launchBtn" type="button" onclick="event.preventDefault();event.stopPropagation();document.body.classList.add('leo-launched');var h=document.getElementById('home');var a=document.getElementById('app');if(h){h.classList.add('hidden');h.style.display='none';h.style.visibility='hidden';h.style.opacity='0';}if(a){a.classList.remove('hidden');a.style.display='flex';a.style.visibility='visible';a.style.opacity='1';a.style.pointerEvents='auto';}try{window.scrollTo(0,0);}catch(e){};try{if(window.updateResponsiveViewportFit)window.updateResponsiveViewportFit();}catch(e){};return false;" ontouchend="event.preventDefault();event.stopPropagation();document.body.classList.add('leo-launched');var h=document.getElementById('home');var a=document.getElementById('app');if(h){h.classList.add('hidden');h.style.display='none';h.style.visibility='hidden';h.style.opacity='0';}if(a){a.classList.remove('hidden');a.style.display='flex';a.style.visibility='visible';a.style.opacity='1';a.style.pointerEvents='auto';}try{window.scrollTo(0,0);}catch(e){};try{if(window.updateResponsiveViewportFit)window.updateResponsiveViewportFit();}catch(e){};return false;" onpointerup="event.preventDefault();event.stopPropagation();document.body.classList.add('leo-launched');var h=document.getElementById('home');var a=document.getElementById('app');if(h){h.classList.add('hidden');h.style.display='none';h.style.visibility='hidden';h.style.opacity='0';}if(a){a.classList.remove('hidden');a.style.display='flex';a.style.visibility='visible';a.style.opacity='1';a.style.pointerEvents='auto';}try{window.scrollTo(0,0);}catch(e){};try{if(window.updateResponsiveViewportFit)window.updateResponsiveViewportFit();}catch(e){};return false;">LAUNCH</button>
   </div>
 </section>
 <section id="app" class="hidden" aria-label="Leo's Lab Beat Maker">
@@ -226,6 +231,28 @@ html,body{
     <div id="modal" class="modal hidden"><button id="closeModal" class="closeX">×</button><div id="modalContent"></div></div>
   </div>
 </section>
+
+<script>
+(function(){
+  function leoHardLaunch(e){
+    if(e){ try{ if(e.cancelable) e.preventDefault(); e.stopPropagation(); }catch(_){}}
+    document.body.classList.add('leo-launched');
+    var h=document.getElementById('home'), a=document.getElementById('app');
+    if(h){ h.classList.add('hidden'); h.style.display='none'; h.style.visibility='hidden'; h.style.opacity='0'; h.style.pointerEvents='none'; }
+    if(a){ a.classList.remove('hidden'); a.style.display='flex'; a.style.visibility='visible'; a.style.opacity='1'; a.style.pointerEvents='auto'; }
+    try{ window.scrollTo(0,0); }catch(_){}
+    return false;
+  }
+  window.leoHardLaunch = leoHardLaunch;
+  document.addEventListener('DOMContentLoaded', function(){
+    var b=document.getElementById('launchBtn');
+    if(!b) return;
+    ['touchstart','touchend','pointerdown','pointerup','mousedown','mouseup','click'].forEach(function(type){
+      b.addEventListener(type, leoHardLaunch, {passive:false, capture:true});
+    });
+  });
+})();
+</script>
 <script>
 (() => {
 'use strict';
@@ -560,10 +587,23 @@ function launchApp(e){
   }
   const home = $('#home');
   const app = $('#app');
-  if(!home || !app || home.classList.contains('hidden')) return;
-  home.classList.add('hidden');
-  app.classList.remove('hidden');
+  document.body.classList.add('leo-launched');
+  if(home){
+    home.classList.add('hidden');
+    home.style.display='none';
+    home.style.visibility='hidden';
+    home.style.opacity='0';
+    home.style.pointerEvents='none';
+  }
+  if(app){
+    app.classList.remove('hidden');
+    app.style.display='flex';
+    app.style.visibility='visible';
+    app.style.opacity='1';
+    app.style.pointerEvents='auto';
+  }
   try{ updateResponsiveViewportFit(); }catch(err){}
+  try{ window.scrollTo(0,0); }catch(err){}
   try{ ensureAudio(); }catch(err){ console.warn('Audio will start after the next user gesture.', err); }
   try{ toast('Welcome to Leo\'s Lab'); }catch(err){}
 }
