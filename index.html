@@ -145,6 +145,10 @@ html,body{
   :root{--fit-pad:12px;}
 }
 
+/* Mario revision: fixed launch button tap behavior. Keep active transform centered instead of shifting right. */
+.launchBtn:active{transform:translateX(-50%) translateY(1px) scale(.985)!important;}
+.launchBtn{touch-action:manipulation!important;pointer-events:auto!important;}
+
 </style>
 </head>
 <body>
@@ -549,8 +553,28 @@ function showModal(kind){
   const vol=$('#masterVol'); if(vol) vol.oninput=()=>{ensureAudio();master.gain.value=parseFloat(vol.value)};
   const ms=$('#modeSelect'); if(ms){ms.value=padMode; ms.onchange=()=>setPadMode(ms.value);}
 }
+function launchApp(e){
+  if(e){
+    if(e.cancelable) e.preventDefault();
+    e.stopPropagation();
+  }
+  const home = $('#home');
+  const app = $('#app');
+  if(!home || !app || home.classList.contains('hidden')) return;
+  home.classList.add('hidden');
+  app.classList.remove('hidden');
+  try{ updateResponsiveViewportFit(); }catch(err){}
+  try{ ensureAudio(); }catch(err){ console.warn('Audio will start after the next user gesture.', err); }
+  try{ toast('Welcome to Leo\'s Lab'); }catch(err){}
+}
 function bindUI(){
-  $('#launchBtn').addEventListener('click',()=>{ensureAudio(); $('#home').classList.add('hidden'); $('#app').classList.remove('hidden'); toast('Welcome to Leo\'s Lab');});
+  const launchButton = $('#launchBtn');
+  if(launchButton){
+    launchButton.setAttribute('type','button');
+    ['pointerup','touchend','click'].forEach(type=>{
+      launchButton.addEventListener(type, launchApp, {passive:false});
+    });
+  }
   $$('.bankBtn').forEach(b=>b.onclick=()=>setBank(b.dataset.bank));
   $('#bpm').oninput=e=>{bpm=Math.max(50,Math.min(220,parseFloat(e.target.value)||92)); updateDisplay();}; $('#bpmMinus').onclick=()=>{$('#bpm').value=(bpm=Math.max(50,bpm-1)).toFixed(1); updateDisplay();}; $('#bpmPlus').onclick=()=>{$('#bpm').value=(bpm=Math.min(220,bpm+1)).toFixed(1); updateDisplay();};
   $('#quantOn').onclick=()=>{quantize=true; $('#quantOn').classList.add('active'); $('#quantOff').classList.remove('active');}; $('#quantOff').onclick=()=>{quantize=false; $('#quantOff').classList.add('active'); $('#quantOn').classList.remove('active');};
@@ -585,6 +609,7 @@ function lockMobileZoom(){
     if(e.touches && e.touches.length>1 && e.cancelable) e.preventDefault();
   }, {passive:false});
   document.addEventListener('touchend', e=>{
+    if(e.target && e.target.closest && e.target.closest('#launchBtn')) return;
     const now=Date.now();
     if(now-lastTouchEnd<=320 && e.cancelable) e.preventDefault();
     lastTouchEnd=now;
